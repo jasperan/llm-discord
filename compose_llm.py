@@ -12,21 +12,47 @@ import pandas as pd
 # Connect to the database
 conn = sqlite3.connect('messages.db')
 
-# Read table from sqlite database
-df = pd.read_sql_query('SELECT * FROM messages', conn)
 
-# Remove duplicates
-df.drop_duplicates(inplace=True)
+def db_to_csv(conn):
 
-# Remove empty messages
-df = df[df['content'] != '']
+    # Read table from sqlite database
+    df = pd.read_sql_query('SELECT * FROM messages', conn)
 
-# dataset is already in order, the more messages we store in messages.db, the better.
+    # Remove duplicates
+    df.drop_duplicates(inplace=True)
 
-print(df.tail())
-pd.set_option('display.max_columns', None)
-print(len(df))
+    # Remove empty messages
+    df = df[df['content'] != '']
+
+    # dataset is already in order, the more messages we store in messages.db, the better.
+
+    print(df.tail())
+    pd.set_option('display.max_columns', None)
+    print(len(df))
+
+    df.to_csv('messages.csv', index=True)
+
+    return df
+
+
+def json_format(df):
+    result = list()
+
+    for index, row in df.iterrows():
+        try:
+            response = df.iloc[index]['content']
+            question = df.iloc[index-1]['content']
+            desired_format = {"question": question, "response": response}
+            result.append(desired_format)
+        except IndexError:
+            continue
+
+    return result
 
 
 
-df.to_csv('messages.csv', index=True)
+
+
+df = db_to_csv(conn)
+result = json_format(df)
+print(result)
