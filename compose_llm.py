@@ -8,7 +8,7 @@ This script retrieves messages from a SQLite3 database and creates a set of ques
 
 import sqlite3
 import pandas as pd
-
+import ujson as json
 # Connect to the database
 conn = sqlite3.connect('messages.db')
 
@@ -50,9 +50,13 @@ def json_format(df):
     return result
 
 
-
+def write_to_json_file(data, filename):
+    with open(filename, 'w') as outfile:
+        json.dump(data, outfile)
 
 
 df = db_to_csv(conn)
 result = json_format(df)
 print(result)
+
+write_to_json_file(result, 'output.json')
