@@ -17,10 +17,11 @@ dir_list = [
     '9_CDC_QA',
 ]
 
-import os
 import json
+import os
+import sys
+
 from bs4 import BeautifulSoup
-import requests
 
 def process_xml_files(root_dir):
     data = []
@@ -36,8 +37,6 @@ def process_xml_files(root_dir):
                 with open(filepath, 'r', encoding='utf-8') as xml_file:
                     soup = BeautifulSoup(xml_file, 'lxml')
                     #print(soup)
-                    qapair_parent = soup.find('qapairs')
-                    #print(qapair_parent)
                     qapairs = soup.find_all('qapair')
                     #print(len(qapairs))
                     for qapair in qapairs:
@@ -61,12 +60,11 @@ def write_json_file(data, output_file):
     with open(output_file, 'w') as json_file:
         json.dump(data, json_file, indent=4)
 
-#root_dir = '/home/datascience/MedQuAD/1_CancerGov_QA/'  # Change this to the root directory of your XML files
-output_file = 'output.json'  # The file where you want to store your JSON data
-
+# Path to a local clone of https://github.com/abachaa/MedQuAD (first CLI argument)
+root_dir = sys.argv[1] if len(sys.argv) > 1 else 'MedQuAD'
 
 for x in dir_list:
     #print(x)
-    data = process_xml_files('{}{}'.format('H:/datasets/MedQuAD/', x))
+    data = process_xml_files(os.path.join(root_dir, x))
     #print(len(data))
     write_json_file(data, 'output_{}.json'.format(x))
