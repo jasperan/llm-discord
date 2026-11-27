@@ -3,8 +3,8 @@ import json
 import pandas as pd
 
 
-# Read CSV into a dataframe
-df = pd.read_csv("mqp.csv")
+# Read CSV into a dataframe (mqp.csv has no header row)
+df = pd.read_csv("mqp.csv", header=None)
 
 # Create an empty list to store JSON objects
 json_list = []
