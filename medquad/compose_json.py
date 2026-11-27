@@ -1,6 +1,6 @@
  
 import json
-import os
+
 from rich import print
 
 # list of file names

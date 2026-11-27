@@ -1,6 +1,8 @@
-'''
-@
-'''
+import json
+import os
+import sys
+
+from bs4 import BeautifulSoup
 
 dir_list = [
     '10_MPlus_ADAM_QA',
@@ -16,12 +18,6 @@ dir_list = [
     '5_NIDDK_QA',
     '9_CDC_QA',
 ]
-
-import json
-import os
-import sys
-
-from bs4 import BeautifulSoup
 
 def process_xml_files(root_dir):
     data = []
