@@ -167,3 +167,9 @@ config.yaml
 messages.csv
 messages.db
 messages.db-*
+output.json
+output_*.json
+unique_file.json
+mqp.csv
+medical.jsonl
+MedQuAD/

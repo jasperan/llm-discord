@@ -1,0 +1,2 @@
+# Copy to config.yaml (gitignored) and fill in your bot token.
+API_TOKEN: "paste-your-discord-bot-token-here"
