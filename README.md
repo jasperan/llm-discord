@@ -1,19 +1,62 @@
 # llm-discord
-Fine-tune an LLM to create a Discord bot that behaves like your friends
 
+Fine-tune an LLM to create a Discord bot that behaves like your friends.
 
-## discord_bot.py
+The repo has three parts:
 
-The provided code is a Python script for a Discord bot that logs messages sent in a server to a SQLite3 database.
+1. **`discord_bot.py`**: a Discord bot that logs every message it can see to a local SQLite database (`messages.db`).
+2. **Dataset scripts**: turn those messages (or public medical Q&A datasets) into JSON you can fine-tune on.
+3. **[`hands-on/`](hands-on/guide.md)**: a walkthrough of LoRA fine-tuning with text-generation-webui, plus a [low-VRAM guide](hands-on/run_low_vram.md) (written July 2023, so upstream tools have changed since).
 
-The script starts by importing necessary modules such as yaml, discord, sqlite3, datetime, and rich. It then reads the API token from a config.yaml file and initializes a discord.Client object with all intents enabled.
+## Quick start
 
-Next, the script establishes a connection to a SQLite3 database named messages.db and creates a table named messages with columns for author and content if it doesn't already exist. It also initializes a variable session_messages to keep track of the number of messages obtained during the current session.
+Requires [uv](https://docs.astral.sh/uv/). It installs Python 3.12 for you if needed.
 
-The script then defines two event handlers for the discord.Client object. The first event handler is on_ready(), which is called when the bot is ready to start receiving events. It prints a message to the console and sets the bot's presence to "👀". The second event handler is on_message(), which is called whenever a message is sent in a server the bot is a member of. It extracts the message content and author, prints a log message to the console using the rich module, and inserts the message content and author into the messages table in the SQLite3 database.
+```bash
+git clone https://github.com/jasperan/llm-discord.git
+cd llm-discord
+uv sync
+cp config.example.yaml config.yaml   # then paste your bot token into it
+uv run discord_bot.py
+```
 
-Finally, the script checks if it is being run as the main program and starts the bot by calling client.run(API_TOKEN).
+Bot setup in the [Discord Developer Portal](https://discord.com/developers/applications):
 
-It is worth noting that the guild variable is not used in the script and can be removed. Additionally, the session_messages variable is not being used to its full potential and could be used to print a message to the console at the end of the session with the number of messages obtained.
+- Create an application, add a bot, and copy its token into `config.yaml` as `API_TOKEN`. `config.yaml` is gitignored, so don't commit your token.
+- Under **Bot → Privileged Gateway Intents**, enable **Presence**, **Server Members** and **Message Content**. The bot requests all intents, and it fails to connect if these are off.
+- Invite the bot to your server with permission to read messages and message history.
 
-Overall, this script provides a good starting point for a Discord bot that logs messages to a SQLite3 database.
+Each message the bot sees is printed to the console and appended to the `messages` table (`author`, `content`) in `messages.db`.
+
+## Build a fine-tuning dataset from your messages
+
+```bash
+uv run --with pandas compose_llm.py
+```
+
+The script reads `messages.db`, removes duplicate and empty messages, and writes:
+
+- `messages.csv`, the cleaned messages;
+- `output.json`, a list of `{"question": <message n-1>, "response": <message n>}` pairs.
+
+## Medical datasets (optional)
+
+These scripts were used to build an example dataset for the hands-on session. They need extra packages, which `uv run --with` pulls in without touching the project environment.
+
+- **[MedQuAD](https://github.com/abachaa/MedQuAD)** (XML) to Alpaca-style JSON (`instruction` / `input` / `output`):
+
+  ```bash
+  git clone https://github.com/abachaa/MedQuAD.git
+  uv run --with beautifulsoup4 --with lxml medquad/parse_xml.py MedQuAD   # writes output_<folder>.json
+  uv run medquad/compose_json.py                                           # merges them into unique_file.json
+  ```
+
+- **[Medical Question Pairs](https://github.com/curai/medical-question-pair-dataset)**: put `mqp.csv` in the repo root, then run:
+
+  ```bash
+  uv run --with pandas create_new_question_jsonl.py   # writes medical.jsonl, one {"question": ...} per line
+  ```
+
+## License
+
+[GPL-3.0](LICENSE)
