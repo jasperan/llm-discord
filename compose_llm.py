@@ -6,11 +6,10 @@ This script retrieves messages from a SQLite3 database and creates a set of ques
 """
 
 
+import json
 import sqlite3
+
 import pandas as pd
-import ujson as json
-# Connect to the database
-conn = sqlite3.connect('messages.db')
 
 
 def db_to_csv(conn):
@@ -19,7 +18,7 @@ def db_to_csv(conn):
     df = pd.read_sql_query('SELECT * FROM messages', conn)
 
     # Remove duplicates
-    df.drop_duplicates(inplace=True)
+    df = df.drop_duplicates()
 
     # Remove empty messages
     df = df[df['content'] != '']
@@ -36,18 +35,10 @@ def db_to_csv(conn):
 
 
 def json_format(df):
-    result = list()
-
-    for index, row in df.iterrows():
-        try:
-            response = df.iloc[index]['content']
-            question = df.iloc[index-1]['content']
-            desired_format = {"question": question, "response": response}
-            result.append(desired_format)
-        except IndexError:
-            continue
-
-    return result
+    # Pair each message with the one before it, by position: the index has gaps
+    # after the cleanup in db_to_csv, so label-based lookups would skip pairs.
+    contents = df['content'].tolist()
+    return [{"question": q, "response": r} for q, r in zip(contents, contents[1:])]
 
 
 def write_to_json_file(data, filename):
@@ -55,8 +46,10 @@ def write_to_json_file(data, filename):
         json.dump(data, outfile)
 
 
-df = db_to_csv(conn)
-result = json_format(df)
-print(result)
+if __name__ == '__main__':
+    conn = sqlite3.connect('messages.db')
+    df = db_to_csv(conn)
+    result = json_format(df)
+    print(result)
 
-write_to_json_file(result, 'output.json')
+    write_to_json_file(result, 'output.json')
