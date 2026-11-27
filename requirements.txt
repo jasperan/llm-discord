@@ -1,4 +1,0 @@
-discord
-pysqlite3
-rich
-pyyaml
