@@ -23,6 +23,11 @@ guild = discord.Guild
 
 # establish connection to sqlite3 database
 conn = sqlite3.connect('messages.db')
+# WAL + synchronous=NORMAL: commits no longer fsync on every message, so
+# on_message doesn't stall the event loop. Survives a bot crash; a power
+# loss can drop only the last few commits.
+conn.execute('PRAGMA journal_mode=WAL')
+conn.execute('PRAGMA synchronous=NORMAL')
 c = conn.cursor()
 
 # create table to store messages if it doesn't already exist
